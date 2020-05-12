@@ -33,9 +33,13 @@ package com.canchitodev.flowabletriggerablecustomservicetask.delegates;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.impl.delegate.TriggerableActivityBehavior;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 
+@Service("triggerableServiceTask")
+@Scope("prototype")
 public class TriggerableServiceTask implements JavaDelegate, TriggerableActivityBehavior, Serializable {
 
     @Override

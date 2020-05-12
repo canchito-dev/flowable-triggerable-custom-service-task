@@ -4,12 +4,12 @@
         xmlns:flowable="http://flowable.org/bpmn"
         targetNamespace="Examples">
 
-    <process id="process">
+    <process id="triggerableCustomServiceTask" name="Triggerable Custom Service Task">
 
         <startEvent id="theStart" />
         <sequenceFlow sourceRef="theStart" targetRef="service1" />
 
-        <serviceTask id="service1" flowable:class="org.flowable.engine.test.bpmn.servicetask.TriggerableServiceTask" flowable:async="true" flowable:triggerable="true"/>
+        <serviceTask id="service1" flowable:delegateExpression="${triggerableServiceTask}" flowable:async="true" flowable:triggerable="true"/>
         <sequenceFlow sourceRef="service1" targetRef="usertask1" />
 
         <userTask id="usertask1" name="Task A"/>
