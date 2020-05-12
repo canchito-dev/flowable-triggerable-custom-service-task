@@ -130,7 +130,11 @@ In the default BPMN notation, this is modeled as a service task followed by a re
 In order to solve this, Flowable has come up with a custom attribute (_flowable:triggerable_) available for use on service tasks. What is does is simple. It joins the behavior of a service task together with a receive task. This means that when the process instance reaches this service task, it will execute the logic found in the _method(DelegateExecution)_ function, as it normally does, and then waits for an external trigger before it continues to the next activity. If the async attribute is also set to true for a triggerable service task, the process instance state is first persisted and then the service task logic will be executed in an async job. 
 
 ```xml
-<serviceTask id="aTriggerableServiceTask" flowable:expression="#{myService.doSomething()}" flowable:triggerable="true" flowable:async="true" />
+<serviceTask id="aTriggerableServiceTask" 
+    flowable:expression="#{myService.doSomething()}" 
+    flowable:triggerable="true" 
+    flowable:async="true" 
+/>
 ```
 
 To avoid optimistic lock exceptions, it is recommended to trigger it asynchronously. By default, an asynchronous job is exclusive, meaning that the process instance will be locked. This guarantees that no other activity on the process instance interfere with the trigger logic.

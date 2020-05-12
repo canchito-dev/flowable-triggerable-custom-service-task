@@ -28,16 +28,33 @@
  * @link		https://github.com/canchito-dev/flowable-triggerable-custom-service-task
  **/
 
-package com.canchitodev.flowabletriggerablecustomservicetask;
+package com.canchitodev.flowabletriggerablecustomservicetask.delegates;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.flowable.engine.delegate.DelegateExecution;
+import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.impl.delegate.TriggerableActivityBehavior;
 
-@SpringBootApplication
-public class FlowableTriggerableCustomServiceTaskApplication {
+import java.io.Serializable;
 
-	public static void main(String[] args) {
-		SpringApplication.run(FlowableTriggerableCustomServiceTaskApplication.class, args);
-	}
+public class TriggerableServiceTask implements JavaDelegate, TriggerableActivityBehavior, Serializable {
 
+    @Override
+    public void execute(DelegateExecution execution) {
+        incrementCount(execution);
+    }
+
+    @Override
+    public void trigger(DelegateExecution execution, String signalName, Object signalData) {
+        incrementCount(execution);
+    }
+
+    public void incrementCount(DelegateExecution execution) {
+        String variableName = "count";
+        int count = 0;
+        if (execution.hasVariable(variableName)) {
+            count = (int) execution.getVariable(variableName);
+        }
+        count++;
+        execution.setVariable(variableName, count);
+    }
 }
