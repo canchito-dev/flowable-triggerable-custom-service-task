@@ -58,7 +58,7 @@ class FlowableTriggerableCustomServiceTaskApplicationTests {
 	private HistoryService historyService;
 
 	@Test
-	@Deployment(resources = "processes/triggerable-custom-service-task.bpmn20.bpmn")
+	@Deployment(resources = "processes/triggerable-custom-service-task.bpmn20.xml")
 	void testTriggerableCustomServiceTask() {
 		// Start a new process instance
 		ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey("triggerableCustomServiceTask");
