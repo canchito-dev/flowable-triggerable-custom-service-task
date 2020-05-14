@@ -138,3 +138,209 @@ In order to solve this, Flowable has come up with a custom attribute (_flowable:
 ```
 
 To avoid optimistic lock exceptions, it is recommended to trigger it asynchronously. By default, an asynchronous job is exclusive, meaning that the process instance will be locked. This guarantees that no other activity on the process instance interfere with the trigger logic.
+
+## Creating a Triggerable Custom Service Task
+
+The first thing you need to do, is create a class and call it TriggerableServiceTask. This class will implement JavaDelegate, TriggerableActivityBehavior and Serializable. Once you have done this, you will need to override the methods execute and trigger. Here is the example code:
+
+```java
+@Service("triggerableServiceTask")
+@Scope("prototype")
+public class TriggerableServiceTask implements JavaDelegate, TriggerableActivityBehavior, Serializable {
+
+    @Override
+    public void execute(DelegateExecution execution) {
+        incrementCount(execution);
+    }
+
+    @Override
+    public void trigger(DelegateExecution execution, String signalName, Object signalData) {
+        incrementCount(execution);
+    }
+
+    public void incrementCount(DelegateExecution execution) {
+        String variableName = "count";
+        int count = 0;
+        if (execution.hasVariable(variableName)) {
+            count = (int) execution.getVariable(variableName);
+        }
+        count++;
+        execution.setVariable(variableName, count);
+    }
+}
+```
+
+The logic is simple. When the _execute_ method is reached, it calls the _incrementCount_, which it creates a process variable (if it does not exists) named "count", increases its current value by one, and updates it so that it is available during the process execution.
+
+When the _trigger_ method is reached, the same logic as with the _execute_ method is followed.
+
+## Testing the Task
+
+To test it, create a file named _triggerable-custom-service-task.bpmn20.xml_ inside the folder `src/main/resources/processes`. This is a dummy process definition. The content of the file is below:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:flowable="http://flowable.org/bpmn"
+        targetNamespace="Examples">
+    <process id="triggerableCustomServiceTask" name="Triggerable Custom Service Task">
+        <startEvent id="theStart" />
+        <sequenceFlow sourceRef="theStart" targetRef="service1" />
+        <serviceTask id="service1" flowable:delegateExpression="${triggerableServiceTask}" flowable:async="true" flowable:triggerable="true"/>
+        <sequenceFlow sourceRef="service1" targetRef="usertask1" />
+        <userTask id="usertask1" name="Task A"/>
+        <sequenceFlow sourceRef="usertask1" targetRef="theEnd" />
+        <endEvent id="theEnd" />
+    </process>
+</definitions>
+```
+
+For testing the workflow, we will use Flowable's API. But first, we need to add jUnit dependencies. Open the `pom.xml file and add:
+
+```xml
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-api</artifactId>
+    <version>${junit.jupiter.version}</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>${junit.version}</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-engine</artifactId>
+    <version>${junit.jupiter.version}</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.junit.vintage</groupId>
+    <artifactId>junit-vintage-engine</artifactId>
+    <version>${junit.vintage.version}</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.awaitility</groupId>
+    <artifactId>awaitility</artifactId>
+</dependency>
+```
+
+Afterwards, create a testing class under folder `src/main/test/java. In our case, we named the class `FlowableTriggerableCustomServiceTaskApplicationTests. And here is the code:
+
+```java
+@SpringBootTest
+class FlowableTriggerableCustomServiceTaskApplicationTests {
+
+	@Autowired
+	private RuntimeService runtimeService;
+
+	@Autowired
+	private TaskService taskService;
+
+	@Autowired
+	private HistoryService historyService;
+
+	@Test
+	@Deployment(resources = "processes/triggerable-custom-service-task.bpmn20.bpmn")
+	void testTriggerableCustomServiceTask() {
+		// Start a new process instance
+		ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey("triggerableCustomServiceTask");
+
+		// Check if triggarable custom service task was reached
+		await().atMost(30L, TimeUnit.SECONDS).until(
+				() -> this.runtimeService.createExecutionQuery()
+						.activityId("service1")
+						.processInstanceId(processInstance.getProcessInstanceId())
+						.singleResult() != null
+		);
+
+		// Get the value of the variable 'count' before the trigger
+		HistoricVariableInstance historicVariableInstance = this.historyService.createHistoricVariableInstanceQuery()
+				.processInstanceId(processInstance.getProcessInstanceId())
+				.variableName("count")
+				.singleResult();
+
+		// Let's see the value of 'count' as it was modified in the execute method
+		System.out.println(String.format("Before trigger: %s", historicVariableInstance.getValue()));
+
+		// We need the execution Id of the triggerable service task
+		Execution execution = this.runtimeService.createExecutionQuery()
+				.processInstanceId(processInstance.getProcessInstanceId())
+				.activityId("service1")
+				.singleResult();
+
+		// Trigger the service task.
+		this.runtimeService.trigger(execution.getId());
+
+		// Get the value of the variable 'count' after the trigger
+		historicVariableInstance = this.historyService.createHistoricVariableInstanceQuery()
+				.processInstanceId(processInstance.getProcessInstanceId())
+				.variableName("count")
+				.singleResult();
+
+		// Let's see the value of 'count' as it was modified in the trigger method
+		System.out.println(String.format("After trigger: %s", historicVariableInstance.getValue()));
+
+		// Check if the user task was reached
+		await().atMost(30L, TimeUnit.SECONDS).until(
+				() -> this.runtimeService.createExecutionQuery()
+						.activityId("usertask1")
+						.processInstanceId(processInstance.getProcessInstanceId())
+						.singleResult() != null
+		);
+
+		// Get the task from the TaskService
+		Task task = this.taskService.createTaskQuery()
+				.processInstanceId(processInstance.getProcessInstanceId())
+				.taskName("Task A")
+				.singleResult();
+
+		// Complete the user task
+		this.taskService.complete(task.getId());
+
+		// Make sure the process has ended
+		await().atMost(30L, TimeUnit.SECONDS).until(
+				() -> this.historyService.createHistoricProcessInstanceQuery()
+						.processInstanceId(processInstance.getProcessInstanceId())
+						.finished()
+						.singleResult() != null
+		);
+	}
+}
+```
+
+The test is very simple. Here are the steps that we performed. They are also included as comments in the sample code:
+
+1. Start a process instance
+2. Check is the triggerable custom service task was reached
+3. Get the value of the variable 'count' before the trigger
+4. Let's see the value of 'count' as it was modified in the execute method, by printing it in the log console
+5. Get  the execution Id of the triggerable custom service task
+6. Trigger the service task
+7. Get the value of the variable 'count' after the trigger
+8. Let's see the value of 'count' as it was modified in the trigger method, by printing it in the log console
+9. Check if the user task was reached
+10. Get the task from the TaskService
+11. Complete the user task
+12. Make sure the process has ended
+
+If you execute the test, you should see these lines logged:
+
+```
+Before trigger: 1 
+After trigger: 2
+```
+
+## Summary
+
+In this post, we have shown how to create a custom and triggerable service task Flowable. We hope that, even though this was a very basic introduction, you understood how to use and configure them. We will try to go deeper into Flowable in upcoming posts.
+
+Please feel free to contact us. We will gladly response to any doubt or question you might have.
