@@ -244,6 +244,20 @@ For testing the workflow, we will use Flowable's API. But first, we need to add 
 </dependency>
 ```
 
+And under the <build> section, add the following plugins:
+
+```xml
+<plugin>
+	<artifactId>maven-surefire-plugin</artifactId>
+	<version>2.22.2</version>
+</plugin>
+
+<plugin>
+	<artifactId>maven-failsafe-plugin</artifactId>
+	<version>2.22.2</version>
+</plugin>
+```
+
 Afterwards, create a testing class under folder `src/main/test/java. In our case, we named the class `FlowableTriggerableCustomServiceTaskApplicationTests. And here is the code:
 
 ```java
