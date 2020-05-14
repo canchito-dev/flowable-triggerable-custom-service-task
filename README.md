@@ -2,6 +2,17 @@
 
 In this tutorial, we will be implementing a triggerable custom service task in Flowable. A triggerable task, is one that when it is reached, it is executes its business logic, but once done, it enters a wait state. In order to leave this state, it must be triggered.
 
+## License
+The MIT License (MIT)  
+
+Copyright (c) 2020, canchito-dev  
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:  
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.  
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 ## Contribute Code
 
 If you would like to become an active contributor to this project please follow these simple steps:
@@ -341,7 +352,7 @@ After trigger: 2
 
 ## Summary
 
-In this post, we have shown how to create a custom and triggerable service task Flowable. We hope that, even though this was a very basic introduction, you understood how to use and configure them. We will try to go deeper into Flowable in upcoming posts.
+In this post, we have shown how to create a custom and triggerable service task in Flowable. We hope that, even though this was a very basic introduction, you understood how to use and configure them. We will try to go deeper into Flowable in upcoming posts.
 
 Please feel free to contact us. We will gladly response to any doubt or question you might have.
 
